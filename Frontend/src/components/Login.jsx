@@ -3,8 +3,8 @@ import { User, Lock, Mail, Eye, EyeOff, GraduationCap, Phone, List, Cookie } fro
 import { useState} from 'react'
 import {useNavigate} from "react-router-dom"
 import Cookies from "js-cookie";
-
-
+import { toast } from 'react-toastify';
+import { useLocation } from 'react-router-dom';
 function Login() {
     const [activeTab, setActiveTab] = useState('login');
     const [showPassword, setShowPassword] = useState(false);
@@ -23,51 +23,52 @@ function Login() {
     const  [message, setMessage] = useState("")
     const [Loginloading, setLoginLoading] = useState(false)
     const [Registerloading, setRegisterLoading] = useState(false)
+    const location = useLocation();
     const navigate = useNavigate()
+    const from = location.state?.from || "/";
 
 const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    
+  e.preventDefault();
+  setError(null);
 
-    if (!loginData.email.endsWith("@gmail.com")) {
-        setError("Please enter valid email");
-        return;
-    } 
+  if (!loginData.email.endsWith("@gmail.com")) {
+    setError("Please enter valid email");
+    return;
+  }
 
-    setLoginLoading(true);
+  setLoginLoading(true);
 
-    try {
-        const options = {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email: loginData.email,
-            password: loginData.password
-        })
-        };
+  try {
+    const response = await fetch("http://localhost:5000/auth/login/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: loginData.email,
+        password: loginData.password,
+      }),
+    });
 
-        const response = await fetch("http://localhost:5000/auth/login/", options);
-        const data = await response.json();
+    const data = await response.json();
 
-        if (!response.ok) { 
-        setError(data.error || "Login Failed");
-        return;
-        }
-
-        const token = data.token;
-        Cookies.set("Jwt_token", token, { expires: 30 });
-
-        if (Cookies.get("Jwt_token") !== undefined) {
-            navigate("/");
-        }
-    } catch (err) {
-        setError("Something went wrong. Please try again.");
-        console.error(err);
-    } finally {
-        setLoginLoading(false);
+    if (!response.ok) {
+      setError(data.error || "Login Failed");
+      return;
     }
+
+    Cookies.set("Jwt_token", data.token, { expires: 30 });
+
+    toast.success("Login successful");
+
+    // ✅ Redirect to intended page
+    navigate(from, { replace: true });
+
+  } catch (err) {
+    setError("Something went wrong. Please try again.",err);
+  } finally {
+    setLoginLoading(false);
+  }
 };
+
 
 const handleRegisterSubmit = async (e) => {
   e.preventDefault();

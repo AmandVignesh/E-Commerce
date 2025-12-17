@@ -42,7 +42,7 @@ export const getProductsByCategory = async(req,res)=>{
         const {category} = req.params;
         const {limit = 0} = req.query;
         
-        const products = await ProductModel.find({category}).limit(limit);
+        const products = await ProductModel.find({category}).sort({ createdAt: -1 }).limit(limit);
         if(!products){
             return res.status(404).json({
                 error:"Products Not found fopr that category",
@@ -83,6 +83,12 @@ export const addReview = async (req, res)=>{
         const userId = req.user.userId;
         const username = req.user.username;
 
+        if (!rating || !comment) {
+            return res.status(400).json({
+                success: false,
+                error: "Rating and comment are required"
+            });
+        }
         const product = await ProductModel.findById(id);
         if(!product){
             return res.status(404).json({error:"Product Not found", success:false})
@@ -96,7 +102,7 @@ export const addReview = async (req, res)=>{
         res.status(200).json({
             message:"Review added successfully",
             success:true,
-            product
+            reviews:product.reviews
         })
 
     } catch (error) {

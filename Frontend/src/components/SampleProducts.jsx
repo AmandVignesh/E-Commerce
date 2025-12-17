@@ -8,6 +8,7 @@ function SampleProducts({category}) {
       const response = await fetch(`http://localhost:5000/product/productsbycategory/${category}?limit=4`);
       console.log(response)
       const data = await response.json()
+      console.log(data)
       if(response.ok){
         setProduct(data.products)
       }

@@ -1,373 +1,348 @@
-import React from 'react'
-import { useState } from 'react';
-import { useEffect } from 'react';
-import { useParams } from 'react-router-dom'
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Heart, ShoppingCart, Star } from "lucide-react";
-import ImageMagnifier from './Zoom.jsx';
-import { useNavigate } from 'react-router-dom';
-function ProductDetail() {
-    const {id} = useParams();
-    const [product, setProduct] = useState([])
-    const [reviews, setReviews] = useState([])
-    const [relatedProducts, setRelatedProducts] = useState([])
-    const originalPrice = Number(product?.price) || 0;
-    const discountPercentage = 25;
-    const discountAmount = (originalPrice * discountPercentage) / 100;
-    const discountedPrice = Number(originalPrice - discountAmount).toFixed(2);
-    const navigate = useNavigate();
-    const goBack = () => navigate(-1);
+import ImageMagnifier from "./Zoom.jsx";
+import Cookies from "js-cookie";
+import { toast } from "react-toastify";
 
-    
-    const getStarFill = (rating, starIndex) => {
-        const full = starIndex + 1 <= rating;
-        const partial = rating > starIndex && rating < starIndex + 1;
-        
-        if (full) return "100%";       // full fill star
-        if (partial) return `${(rating - starIndex) * 100}%`; // partial fill (like 0.8 → 80%)
-        return "0%";                   // empty star
+function ProductDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [product, setProduct] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Review form state
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
+  const originalPrice = Number(product?.price) || 0;
+  const discountPercentage = 25;
+  const discountedPrice = (
+    originalPrice -
+    (originalPrice * discountPercentage) / 100
+  ).toFixed(2);
+
+  const goBack = () => navigate(-1);
+
+  const getStarFill = (rating, starIndex) => {
+    const full = starIndex + 1 <= rating;
+    const partial = rating > starIndex && rating < starIndex + 1;
+    if (full) return "100%";
+    if (partial) return `${(rating - starIndex) * 100}%`;
+    return "0%";
+  };
+
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const res = await fetch(
+          `http://localhost:5000/product/products/getProductById/${id}`
+        );
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to load product");
+        }
+
+        setProduct(data.product);
+        setReviews(data.product.reviews || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
 
+    fetchProduct();
+  }, [id]);
 
-    useEffect(()=>{
-         window.scrollTo(0, 0);
-        const fetchProducts = async()=>{
-            const response = await fetch(`http://localhost:5000/product/products/getProductById/${id}`);
-            const data = await response.json();
-            console.log(data)
-            if(response.ok){
-                setProduct(data.product);
-                setReviews(data.product.reviews)
-            }
-        }
-        fetchProducts()
-    },[id])
   
-    
+  const handleAddToCart = async () => {
+    if (!Cookies.get("Jwt_token")) {
+      alert("Please login to add items to cart");
+      return;
+    }
+
+    if (!product?._id) {
+      alert("Product not loaded");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/cart/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Cookies.get("Jwt_token")}`
+        },
+        body: JSON.stringify({ productId: product._id })
+      });
+
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to add to cart");
+      }
+      toast.success("Product Added To Cart!!")
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  
+  
+  const handleSubmitReview = async () => {
+  if (!Cookies.get("Jwt_token")) {
+    setReviewError("Please login to submit a review");
+    return;
+  }
+
+  if (!reviewRating || !reviewComment.trim()) {
+    setReviewError("Rating and review are required");
+    return;
+  }
+
+  try {
+    setReviewLoading(true);
+    setReviewError("");
+
+    const res = await fetch(
+      `http://localhost:5000/product/products/${id}/reviews`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Cookies.get("Jwt_token")}`
+        },
+        body: JSON.stringify({
+          rating: reviewRating,
+          comment: reviewComment
+        })
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to add review");
+    }
+
+    // ✅ MATCH BACKEND RESPONSE
+    setReviews(data.reviews);
+
+    setShowReviewForm(false);
+    setReviewRating(0);
+    setReviewComment("");
+  } catch (err) {
+    setReviewError(err.message);
+  } finally {
+    setReviewLoading(false);
+  }
+};
 
 
 
+  /* ---------------- LOADING / ERROR ---------------- */
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg font-semibold">Loading product...</p>
+      </div>
+    );
+  }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  /* ---------------- UI ---------------- */
   return (
     <main className="bg-background min-h-screen">
-        {/* Back Button */}
-            <button onClick={goBack} className="w-fit px-4 py-2 mt-15 ml-10 bg-black text-white rounded-md hover:bg-gray-800 transition flex items-center gap-2">
-                ← Back
+      {/* Back Button */}
+      <button
+        onClick={goBack}
+        className="px-4 py-2 ml-10 mt-6 bg-black text-white rounded-md"
+      >
+        ← Back
+      </button>
+
+      {/* Product Section */}
+      <section className="px-6 py-10 max-w-7xl mx-auto grid md:grid-cols-2 gap-12">
+        <ImageMagnifier
+          src={product.image}
+          alt={product.title}
+          zoom={2.5}
+          lensSize={180}
+        />
+
+        <div className="space-y-6">
+          <span className="text-sm uppercase bg-gray-100 px-3 py-1 rounded-full">
+            {product.category}
+          </span>
+
+          <h1 className="text-4xl font-bold">{product.title}</h1>
+
+          {/* Rating */}
+          <div className="flex items-center gap-2">
+            
+            {[0, 1, 2, 3, 4].map((star) => (
+              <div key={star} className="relative w-6 h-6">
+                <Star className="text-gray-300 absolute" />
+                <div
+                  className="absolute overflow-hidden"
+                  style={{ width: getStarFill(product.rating || 0, star) }}
+                >
+                  
+                  <Star className="fill-yellow-500 text-yellow-500" />
+                </div>
+              </div>
+
+            ))}
+            <span>{product.rating.toFixed(2)}</span>
+            <span className="text-sm text-gray-500">
+              ({product.numReviews || 0} reviews)
+            </span>
+          </div>
+
+          {/* Price */}
+          <div className="flex gap-3 items-center">
+            <span className="text-3xl font-bold">${discountedPrice}</span>
+            <span className="line-through text-gray-400">
+              ${originalPrice}
+            </span>
+          </div>
+
+          <p className="text-gray-600">{product.description}</p>
+
+          <div className="flex gap-4">
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 bg-black text-white py-3 rounded-md"
+            >
+              <ShoppingCart className="inline mr-2" /> Add to Cart
             </button>
 
-      {/* Product Showcase Section */}
-      <section className="px-6 py-16 md:py-2 max-w-7xl mx-auto">
-            
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
-           
-        
-
-
-          {/* Product Image */}
-          
-          <ImageMagnifier 
-            src={product?.image} 
-            alt={product?.title} 
-            zoom={2.5} 
-            lensSize={180}
-          />
-
-
-
-          {/* Product Details */}
-          <div className="flex flex-col justify-center space-y-6">
-
-            {/* Category Badge */}
-            <span className="text-sm font-medium text-accent uppercase tracking-widest bg-accent/10 px-3 py-1 rounded-full w-fit">
-              {product?.category}
-            </span>
-
-            {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-serif font-bold leading-tight">
-              {product?.title}
-            </h1>
-
-            {/* Rating */}
-           
-            <div className="flex items-center gap-3">
-                    {/* Stars */}
-                    <div className="flex items-center gap-1">
-                        {[0, 1, 2, 3, 4].map((star) => {
-                        const width = getStarFill(product.rating || 0, star);
-
-                        return (
-                            <div key={star} className="relative w-6 h-6">
-                            {/* Empty Star */}
-                            <Star className="w-6 h-6 text-gray-300 absolute top-0 left-0" />
-
-                            {/* Filled Portion */}
-                            <div
-                                className="absolute top-0 left-0 h-full overflow-hidden"
-                                style={{ width }}
-                            >
-                                <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />
-                            </div>
-                            </div>
-                        );
-                        })}
-                    </div>
-
-                    {/* ⭐ Rating Text */}
-                    <span className="text-sm text-muted-foreground font-medium">
-                        {product.rating ? product.rating.toFixed(1) : "0.0"} 
-                    </span>
-
-                    {/* ⭐ Review Count */}
-                    <span className="text-sm text-muted-foreground">
-                        ({product.numReviews} reviews)
-                    </span>
-            </div>
-
-
-
-
-
-
-            {/* Price */}
-            
-            <div className="flex items-baseline gap-3 py-4 border-y border-border">
-            <span className="text-3xl md:text-4xl font-bold text-foreground">
-                ${discountedPrice}
-            </span>
-
-            <span className="text-xl text-muted-foreground line-through">
-                ${originalPrice}
-            </span>
-
-            <span className="text-sm font-semibold text-accent bg-accent/10 px-2 py-1 rounded">
-                {discountPercentage}% OFF
-            </span>
-            </div>
-
-
-            {/* Description */}
-            <p className="text-base text-muted-foreground leading-relaxed">{product?.description}</p>
-
-            {/* Availability */}
-           
-            <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span className="text-sm font-medium text-green-700">
-                In Stock 
-            </span>
-            </div>
-
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
-
-              <button
-                disabled={!product?.inStock}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-md 
-                  bg-foreground text-white hover:bg-foreground/90 font-semibold"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                Add to Cart
-              </button>
-
-              <button
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-md 
-                  border-2 border-foreground text-foreground hover:bg-foreground/5 font-semibold"
-              >
-                <Heart className="w-5 h-5" />
-                Wishlist
-              </button>
-
-            </div>
-
-            {/* Trust Badges */}
-            <div className="pt-4 grid grid-cols-3 gap-4 border-t">
-              {["Free Shipping", "30-Day Returns", "2-Year Warranty"].map((text, idx) => (
-                <div className="text-center" key={idx}>
-                  <div className="text-xl font-semibold text-accent mb-1">✓</div>
-                  <p className="text-xs text-muted-foreground">{text}</p>
-                </div>
-              ))}
-            </div>
+            <button className="flex-1 border py-3 rounded-md">
+              <Heart className="inline mr-2" /> Wishlist
+            </button>
           </div>
         </div>
       </section>
 
-      {/* About Section */}
-      {product?.aboutSections?.length > 0 && (
-        <section className="px-6 py-16 md:py-24 bg-secondary/50">
-          <div className="max-w-3xl mx-auto">
-
-            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-8">
-              About This Product
-            </h2>
-
-            <div className="space-y-6 text-muted-foreground leading-relaxed">
-
-              {product.aboutSections.map((section, i) => (
-                <p key={i}>{section}</p>
-              ))}
-
-              {product.features?.length > 0 && (
-                <div className="bg-background rounded-lg p-6 mt-8 border">
-                  <h3 className="font-semibold mb-4">Key Features</h3>
-
-                  <ul className="space-y-2 text-sm">
-                    {product.features.map((feature, i) => (
-                      <li key={i} className="flex gap-3">
-                        <span className="text-accent font-bold">•</span>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                </div>
-              )}
-
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Reviews */}
-      <section className="px-6 py-16 md:py-24 max-w-7xl mx-auto">
-
-        <div className="flex flex-col md:flex-row justify-between mb-12 gap-4">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold">Customer Reviews</h2>
-
-          <button className="bg-foreground text-white hover:bg-foreground/90 font-semibold px-6 py-3 rounded-md">
-            Add a Review
+      {/* Reviews Section */}
+      <section className="px-6 py-16 max-w-5xl mx-auto">
+        <div className="flex justify-between mb-6">
+          <h2 className="text-3xl font-bold">Customer Reviews</h2>
+          <button
+            onClick={() => setShowReviewForm(true)}
+            className="bg-black text-white px-5 py-2 rounded-md"
+          >
+            Write a Review
           </button>
         </div>
 
-        {/* No Reviews */}
-        {reviews.length === 0 && (
-          <div className="text-center py-16 bg-secondary/50 border-2 border-dashed rounded-lg">
+        {/* Review Form */}
+        {showReviewForm && (
+          <div className="border p-6 rounded-lg mb-10">
+            {reviewError && (
+              <p className="text-red-500 text-sm mb-3">{reviewError}</p>
+            )}
 
-            <p className="text-lg text-muted-foreground mb-4">No reviews yet</p>
-            <p className="text-sm text-muted-foreground mb-6">
-              Be the first to share your experience
-            </p>
+            <div className="mb-4">
+              <p className="mb-2 font-medium">Rating</p>
+              <div className="flex gap-3">
+                {[1, 2, 3, 4, 5].map((r) => (
+                  <label key={r} className="cursor-pointer flex items-center">
+                    <input
+                      type="radio"
+                      checked={reviewRating === r}
+                      onChange={() => setReviewRating(r)}
+                      className="mr-1"
+                    />
+                    <span>{r}</span>
+                    <Star className="fill-yellow-500 text-yellow-500 w-4 h-4" />
+                  </label>
+                ))}
+              </div>
+            </div>
 
-            <button className="border-2 border-foreground text-foreground px-6 py-3 rounded-md hover:bg-foreground/5">
-              Write a Review
-            </button>
+            <textarea
+              rows="4"
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              className="w-full border p-3 rounded-md mb-4"
+              placeholder="Write your review..."
+            />
 
+            <div className="flex gap-3">
+              <button
+                onClick={handleSubmitReview}
+                disabled={reviewLoading}
+                className="bg-black text-white px-6 py-2 rounded-md"
+              >
+                {reviewLoading ? "Submitting..." : "Submit"}
+              </button>
+              <button
+                onClick={() => setShowReviewForm(false)}
+                className="border px-6 py-2 rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
 
         {/* Review List */}
-        {reviews.length > 0 && (
-          <div className="grid gap-6">
+        {reviews.length === 0 && !showReviewForm ? (
+          <div className="text-center py-12 border-dashed border rounded-lg">
+            <p className="text-lg text-gray-500">No reviews yet</p>
+            <p className="text-sm text-gray-400">
+              Be the first to review this product
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
             {reviews.map((review) => (
-              <div key={review.id} className="border rounded-lg p-6 bg-background">
-
-                <div className="flex justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold">{review.author}</h3>
-
-                      {review.verified && (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                          Verified Purchase
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2 items-center">
-                      <div className="flex gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < review.rating ? "fill-accent" : "text-muted"}`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-muted-foreground">{review.date}</span>
-                    </div>
-                  </div>
+              <div
+                key={review._id}
+                className="border p-5 rounded-lg flex gap-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-sky-500 text-white flex items-center justify-center text-xl font-bold uppercase">
+                  {review.name.charAt(0)}
                 </div>
 
-                <p className="text-muted-foreground leading-relaxed">{review.comment}</p>
-
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <h4 className="font-semibold text-lg">{review.name}</h4>
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">{review.rating}</span>
+                      <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                    </div>
+                  </div>
+                  <p className="text-gray-600">{review.comment}</p>
+                </div>
               </div>
             ))}
           </div>
         )}
-
       </section>
-
-      {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <section className="px-6 py-16 md:py-24 bg-secondary/50">
-          <div className="max-w-7xl mx-auto">
-
-            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-8">
-              Our Customers Also Liked
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-              {relatedProducts.map((rp) => (
-                <div
-                  key={rp.id}
-                  className="border rounded-lg overflow-hidden bg-background hover:shadow-lg transition flex flex-col"
-                >
-
-                  {/* Image */}
-                  <div className="w-full aspect-square bg-muted overflow-hidden">
-                    <img
-                      src={rp.image}
-                      alt={rp.name}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                    />
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-5 flex flex-col flex-1">
-
-                    <p className="text-xs font-medium uppercase text-accent mb-2">{rp.category}</p>
-
-                    <h3 className="font-serif font-semibold mb-3 line-clamp-2 text-sm">
-                      {rp.name}
-                    </h3>
-
-                    <div className="flex gap-1 mb-3">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${i < rp.rating ? "fill-accent" : "text-muted"}`}
-                        />
-                      ))}
-                    </div>
-
-                    <div className="flex items-baseline gap-2 mb-4">
-                      <span className="font-bold">{rp.price}</span>
-                      {rp.oldPrice && (
-                        <span className="text-sm line-through text-muted-foreground">
-                          {rp.oldPrice}
-                        </span>
-                      )}
-                    </div>
-
-                    <button
-                      className="w-full mt-auto flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-foreground text-white hover:bg-foreground/90"
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Add to Cart
-                    </button>
-
-                  </div>
-                </div>
-              ))}
-
-            </div>
-          </div>
-        </section>
-      )}
-
     </main>
   );
 }
 
-
-export default ProductDetail
+export default ProductDetail;

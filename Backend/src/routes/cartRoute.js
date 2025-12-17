@@ -6,6 +6,6 @@ const cartRouter = Router();
 cartRouter.get("/getCart",authMiddleware, getCartItems);
 cartRouter.post("/add", authMiddleware, addToCart);
 cartRouter.post("/decrease", authMiddleware, decreaseCartItems)
-cartRouter.post("/clear", authMiddleware, clearCart)
+cartRouter.delete("/clear", authMiddleware, clearCart)
 
 export default cartRouter
