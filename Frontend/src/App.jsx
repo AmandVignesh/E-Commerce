@@ -15,8 +15,10 @@ import Wishlist from './components/Wishlist.jsx';
 import Protected from './components/Protected.jsx';
 import CartDrawer from "./components/Cart.jsx"; // ✅ ADD THIS
 import Cookies from "js-cookie";
+import CheckoutPage from './components/Checkout.jsx';
 function App() {
   // ✅ CART STATE
+  const API_URL = import.meta.env.VITE_API_URL;
   const [openCart, setOpenCart] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [login, setLogin] = useState(() => Cookies.get("Jwt_token") !== undefined);
@@ -26,7 +28,7 @@ function App() {
       if (!Cookies.get("Jwt_token")) return;
 
       try {
-        const res = await fetch("http://localhost:5000/cart/getCart", {
+        const res = await fetch(`${API_URL}/cart/getCart`, {
           headers: {
             Authorization: `Bearer ${Cookies.get("Jwt_token")}`
           }
@@ -68,7 +70,7 @@ function App() {
           <Route path='/product/:id' element={<Protected><ProductDetail/></Protected>}/>
           <Route path='/contact' element={<Protected><ContactPage/></Protected>}/>
           <Route path='/shop' element={<Protected><ShopPage/></Protected>}/>
-        
+          <Route path='/checkout' element={<Protected><CheckoutPage/></Protected>}/>
         
       </Routes>
     </BrowserRouter>

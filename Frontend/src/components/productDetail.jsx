@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import ImageMagnifier from "./Zoom.jsx";
@@ -20,6 +20,7 @@ function ProductDetail() {
   const [isInCart, setIsInCart] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
   const originalPrice = Number(product?.price) || 0;
+  const API_URL = import.meta.env.VITE_API_URL;
   const discountPercentage = 25;
   const discountedPrice = (
     originalPrice -
@@ -36,14 +37,14 @@ function ProductDetail() {
     return "0%";
   };
 
-  const checkWishlistStatus = async (productId) => {
+  const checkWishlistStatus = useCallback(async (productId) => {
   if (!token) {
     setIsWishlisted(false);
     return;
   }
 
   try {
-    const res = await fetch("http://localhost:5000/wishlist/", {
+    const res = await fetch(`${API_URL}/wishlist/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -58,15 +59,16 @@ function ProductDetail() {
     console.error("Wishlist check failed", err);
     setIsWishlisted(false);
   }
-};
-const checkCartStatus = async (productId) => {
+}, [token]);
+
+const checkCartStatus = useCallback(async (productId) => {
   if (!token) {
     setIsInCart(false);
     return;
   }
 
   try {
-    const res = await fetch("http://localhost:5000/cart/getCart", {
+    const res = await fetch(`${API_URL}/cart/getCart`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -88,7 +90,7 @@ const checkCartStatus = async (productId) => {
     console.error("Cart check failed", err);
     setIsInCart(false);
   }
-};
+}, [token]);
 
 
   useEffect(() => {
@@ -100,7 +102,7 @@ const checkCartStatus = async (productId) => {
         setError("");
 
         const res = await fetch(
-          `http://localhost:5000/product/products/getProductById/${id}`,
+          `${API_URL}/product/products/getProductById/${id}`,
           {
             headers: {
               Authorization: token ? `Bearer ${token}` : "",
@@ -125,7 +127,7 @@ const checkCartStatus = async (productId) => {
     };
 
     fetchProduct();
-  }, [id, token]);
+  }, [id, token, checkWishlistStatus, checkCartStatus]);
 
   
   const handleCartToggle = async () => {
@@ -138,8 +140,8 @@ const checkCartStatus = async (productId) => {
     setCartLoading(true);
 
     const url = isInCart
-      ? `http://localhost:5000/cart/remove/${product._id}`
-      : "http://localhost:5000/cart/add";
+      ? `${API_URL}/cart/remove/${product._id}`
+      : `${API_URL}/cart/add`;
 
     const res = await fetch(url, {
       method: isInCart ? "DELETE" : "POST",
@@ -186,7 +188,7 @@ const checkCartStatus = async (productId) => {
     setReviewError("");
 
     const res = await fetch(
-      `http://localhost:5000/product/products/${id}/reviews`,
+      `${API_URL}/product/products/${id}/reviews`,
       {
         method: "POST",
         headers: {
@@ -226,8 +228,8 @@ const handleWishlistToggle = async () => {
 
   try {
     const url = isWishlisted
-      ? `http://localhost:5000/wishlist/remove/${product._id}`
-      : "http://localhost:5000/wishlist/";
+      ? `${API_URL}/wishlist/remove/${product._id}`
+      : `${API_URL}/wishlist/`;
 
     const res = await fetch(url, {
       method: isWishlisted ? "DELETE" : "POST",

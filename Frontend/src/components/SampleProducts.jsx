@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react'
 import ProductCard from './ProductCard.jsx'
 function SampleProducts({category}) {
   const [product, setProduct] = useState([])
+  const API_URL = import.meta.env.VITE_API_URL;
   useEffect(()=>{
     const fetchi = async()=>{
-      const response = await fetch(`http://localhost:5000/product/productsbycategory/${category}?limit=4`);
+      const response = await fetch(`${API_URL}/product/productsbycategory/${category}?limit=4`);
       console.log(response)
       const data = await response.json()
       console.log(data)

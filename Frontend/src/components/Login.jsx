@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { toast } from 'react-toastify';
 import { useLocation } from 'react-router-dom';
 function Login() {
+    const API_URL = import.meta.env.VITE_API_URL;
     const [activeTab, setActiveTab] = useState('login');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -39,7 +40,7 @@ const handleLoginSubmit = async (e) => {
   setLoginLoading(true);
 
   try {
-    const response = await fetch("http://localhost:5000/auth/login/", {
+    const response = await fetch(`${API_URL}/auth/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -104,7 +105,7 @@ const handleRegisterSubmit = async (e) => {
       })
     };
 
-    const response = await fetch("http://localhost:5000/auth/register/", options);
+    const response = await fetch(`${API_URL}/auth/register/`, options);
     const data = await response.json();
     
 

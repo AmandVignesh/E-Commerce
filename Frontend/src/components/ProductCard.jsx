@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { ShoppingCart, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Cookies from "js-cookie";
@@ -8,13 +8,14 @@ function ProductCard({ product, showRemove = false, onRemove }) {
   const [isAdded, setIsAdded] = useState(false);
   const [loading, setLoading] = useState(false);
   const token = Cookies.get("Jwt_token");
+  const API_URL = import.meta.env.VITE_API_URL;
 
   /* ---------------- CHECK CART ---------------- */
-  const checkProductInCart = async () => {
+  const checkProductInCart = useCallback(async () => {
     if (!token || !product?._id) return;
 
     try {
-      const res = await fetch("http://localhost:5000/cart/getCart", {
+      const res = await fetch(`${API_URL}/cart/getCart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -23,11 +24,11 @@ function ProductCard({ product, showRemove = false, onRemove }) {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [token, product?._id]);
 
   useEffect(() => {
     checkProductInCart();
-  }, [product?._id]);
+  }, [checkProductInCart]);
 
   /* ---------------- ADD TO CART ---------------- */
   const handleAddToCart = async (e) => {
@@ -36,7 +37,7 @@ function ProductCard({ product, showRemove = false, onRemove }) {
 
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/cart/add", {
+      const res = await fetch(`${API_URL}/cart/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

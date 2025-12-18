@@ -10,6 +10,7 @@ export default function ShopPage() {
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState("Featured")
   const [products, setProducts] = useState([])
+  const API_URL = import.meta.env.VITE_API_URL;
   
   /* 🔹 Pagination state */
   const [currentPage, setCurrentPage] = useState(1)
@@ -20,7 +21,7 @@ export default function ShopPage() {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const res = await fetch("http://localhost:5000/product/products")
+      const res = await fetch(`${API_URL}/product/products`)
       const data = await res.json()
       setProducts(data.products)
     }

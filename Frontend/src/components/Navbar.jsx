@@ -5,7 +5,11 @@ import Cookies from "js-cookie";
 import CartDrawer from "./Cart.jsx";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useLocation } from "react-router-dom";
 export function Header({setOpenCart, openCart, cartCount}) {
+  const location = useLocation();
+  const isCheckoutPage = location.pathname === "/checkout";
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate()
   
@@ -80,7 +84,10 @@ export function Header({setOpenCart, openCart, cartCount}) {
                       toast.warning("Please login to view your cart");
                       return;
                     }
-                    setOpenCart(true);
+                    if(!isCheckoutPage){
+                      setOpenCart(true);
+                    }
+                    
                 }}
                   className="relative p-2 rounded-full hover:bg-muted"
                   aria-label="Cart"

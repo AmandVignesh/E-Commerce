@@ -8,10 +8,11 @@ export default function WishlistPage() {
   const token = Cookies.get("Jwt_token");
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchWishlist = async () => {
-      const res = await fetch("http://localhost:5000/wishlist/", {
+      const res = await fetch(`${API_URL}/wishlist/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -22,7 +23,7 @@ export default function WishlistPage() {
   }, [token]);
 
   const removeFromWishlist = async (productId) => {
-    await fetch(`http://localhost:5000/wishlist/remove/${productId}`, {
+    await fetch(`${API_URL}/wishlist/remove/${productId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

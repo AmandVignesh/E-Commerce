@@ -28,7 +28,7 @@ export const getProductById = async (req, res) => {
 
     let isWishlisted = false;
 
-    // ✅ Check wishlist only if user is logged in
+    
     if (req.user) {
       const wishlist = await WishlistModel.findOne({
         user: req.user.userId,

@@ -12,7 +12,7 @@ export const getCartItems = async (req, res) => {
     const cartProducts = await CartModel
       .findOne({ user: userId })
       .populate("items.product", "title price description image category");
-      console.log(cartProducts)
+      
 
     if (!cartProducts) {
       return res.status(404).json({

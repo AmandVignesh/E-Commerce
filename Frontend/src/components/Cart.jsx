@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { X, Trash2 } from "lucide-react";
 import Cookies from "js-cookie";
 import { Link } from "react-router-dom";
@@ -6,16 +6,17 @@ import { useNavigate } from "react-router-dom";
 const DISCOUNT_PERCENTAGE = 25;
 
 export default function CartDrawer({ open, onClose }) {
+  const API_URL = import.meta.env.VITE_API_URL;
   const [cart, setCart] = useState({ items: [] });
   const token = Cookies.get("Jwt_token");
   const navigate = useNavigate();
 
   /* ---------------- FETCH CART ---------------- */
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
      if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:5000/cart/getCart", {
+      const res = await fetch(`${API_URL}/cart/getCart`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -31,19 +32,19 @@ export default function CartDrawer({ open, onClose }) {
     } catch (error) {
       console.error("Fetch cart error:", error);
     }
-  };
+  }, [token]);
 
   /* ---------------- FETCH ONLY WHEN DRAWER OPENS ---------------- */
   useEffect(() => {
     if (open && token) {
       fetchCart();
     }
-  },[open, token]);
+  },[open, token, fetchCart]);
 
   /* ---------------- ADD ITEM ---------------- */
   const addItem = async (id) => {
     try {
-      await fetch("http://localhost:5000/cart/add", {
+      await fetch(`${API_URL}/cart/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,7 +62,7 @@ export default function CartDrawer({ open, onClose }) {
   /* ---------------- DECREASE ITEM ---------------- */
   const decreaseItem = async (id) => {
     try {
-      await fetch("http://localhost:5000/cart/decrease", {
+      await fetch(`${API_URL}/cart/decrease`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -80,7 +81,7 @@ export default function CartDrawer({ open, onClose }) {
   const removeItemCompletely = async (id, quantity) => {
     try {
       for (let i = 0; i < quantity; i++) {
-        await fetch("http://localhost:5000/cart/decrease", {
+        await fetch(`${API_URL}/cart/decrease`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -99,7 +100,7 @@ export default function CartDrawer({ open, onClose }) {
   /* ---------------- CLEAR CART ---------------- */
   const clearCart = async () => {
     try {
-      const res = await fetch("http://localhost:5000/cart/clear", {
+      const res = await fetch(`${API_URL}/cart/clear`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`
@@ -119,7 +120,7 @@ export default function CartDrawer({ open, onClose }) {
     }
   };
 
-  /* ---------------- PRICE CALCULATIONS ---------------- */
+  
   const calculateDiscountedPrice = (price) =>
     price - (price * DISCOUNT_PERCENTAGE) / 100;
 
@@ -135,7 +136,7 @@ export default function CartDrawer({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm ">
       <div className="w-[420px] bg-white h-full p-6 overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
@@ -226,7 +227,10 @@ export default function CartDrawer({ open, onClose }) {
         </div>
 
         {/* Actions */}
-        <button className="w-full mt-4 bg-[#000000] text-white py-3 rounded">
+        <button onClick={()=>{
+            onClose();
+            navigate("/checkout")
+        }} className="w-full mt-4 bg-[#000000] text-white py-3 rounded">
           Proceed to Checkout
         </button>
 
