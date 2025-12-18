@@ -53,7 +53,7 @@ function Hero() {
             {/* Right Image */}
             <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden bg-muted shadow-xl">
               <img
-                src="https://res.cloudinary.com/dnx2ozxvd/image/upload/v1765284742/Screenshot_2025-12-09_182202_eegtnm.png"
+                src="https://res.cloudinary.com/dnx2ozxvd/image/upload/v1766051529/Screenshot_2025-12-09_182202_vglsyp.png"
                 alt="Featured products"
                 className="w-full h-full object-cover"
               />
