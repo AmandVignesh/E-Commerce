@@ -7,6 +7,6 @@ const wishlistRouter = Router();
 
 wishlistRouter.get("/", authMiddleware, getWishlistItems);          
 wishlistRouter.post("/", authMiddleware, addToWishlist);            
-wishlistRouter.delete("/:productId", authMiddleware, removeFromWishlist); 
+wishlistRouter.delete("/remove/:productId", authMiddleware, removeFromWishlist); 
 
 export default wishlistRouter;

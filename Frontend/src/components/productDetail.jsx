@@ -8,28 +8,26 @@ import { toast } from "react-toastify";
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // Review form state
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState("");
-
+  const [isInCart, setIsInCart] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
   const originalPrice = Number(product?.price) || 0;
   const discountPercentage = 25;
   const discountedPrice = (
     originalPrice -
     (originalPrice * discountPercentage) / 100
   ).toFixed(2);
-
   const goBack = () => navigate(-1);
-
+  const [isWishlisted, setIsWishlisted] = useState(false)
+  const token = Cookies.get("Jwt_token");
   const getStarFill = (rating, starIndex) => {
     const full = starIndex + 1 <= rating;
     const partial = rating > starIndex && rating < starIndex + 1;
@@ -38,7 +36,61 @@ function ProductDetail() {
     return "0%";
   };
 
-  
+  const checkWishlistStatus = async (productId) => {
+  if (!token) {
+    setIsWishlisted(false);
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/wishlist/", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+
+    const exists = data?.wishlist?.items?.some(
+      (item) => item.product._id === productId
+    );
+
+    setIsWishlisted(Boolean(exists));
+  } catch (err) {
+    console.error("Wishlist check failed", err);
+    setIsWishlisted(false);
+  }
+};
+const checkCartStatus = async (productId) => {
+  if (!token) {
+    setIsInCart(false);
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/cart/getCart", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    const items =
+      data.cart?.items ||
+      data.cartProducts?.items ||
+      [];
+
+    const exists = items.some(
+      (item) => item.product._id === productId
+    );
+
+    setIsInCart(exists);
+  } catch (err) {
+    console.error("Cart check failed", err);
+    setIsInCart(false);
+  }
+};
+
+
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -48,7 +100,12 @@ function ProductDetail() {
         setError("");
 
         const res = await fetch(
-          `http://localhost:5000/product/products/getProductById/${id}`
+          `http://localhost:5000/product/products/getProductById/${id}`,
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          }
         );
         const data = await res.json();
 
@@ -58,6 +115,8 @@ function ProductDetail() {
 
         setProduct(data.product);
         setReviews(data.product.reviews || []);
+        checkWishlistStatus(data.product._id);
+        checkCartStatus(data.product._id); 
       } catch (err) {
         setError(err.message);
       } finally {
@@ -66,43 +125,51 @@ function ProductDetail() {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, token]);
 
   
-  const handleAddToCart = async () => {
-    if (!Cookies.get("Jwt_token")) {
-      alert("Please login to add items to cart");
-      return;
-    }
+  const handleCartToggle = async () => {
+  if (!token) {
+    toast.error("Please login to manage cart");
+    return;
+  }
 
-    if (!product?._id) {
-      alert("Product not loaded");
-      return;
-    }
+  try {
+    setCartLoading(true);
 
-    try {
-      const res = await fetch("http://localhost:5000/cart/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${Cookies.get("Jwt_token")}`
-        },
-        body: JSON.stringify({ productId: product._id })
-      });
+    const url = isInCart
+      ? `http://localhost:5000/cart/remove/${product._id}`
+      : "http://localhost:5000/cart/add";
 
+    const res = await fetch(url, {
+      method: isInCart ? "DELETE" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: !isInCart
+        ? JSON.stringify({ productId: product._id })
+        : null,
+    });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to add to cart");
-      }
-      toast.success("Product Added To Cart!!")
-    } catch (err) {
-      alert(err.message);
-    }
-  };
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
 
-  
-  
+    setIsInCart(!isInCart);
+
+    toast.success(
+      isInCart
+        ? "Removed from cart"
+        : "Added to cart"
+    );
+  } catch (err) {
+    toast.error(err.message || "Cart action failed");
+  } finally {
+    setCartLoading(false);
+  }
+};
+
+ 
   const handleSubmitReview = async () => {
   if (!Cookies.get("Jwt_token")) {
     setReviewError("Please login to submit a review");
@@ -148,6 +215,43 @@ function ProductDetail() {
     setReviewError(err.message);
   } finally {
     setReviewLoading(false);
+  }
+};
+
+const handleWishlistToggle = async () => {
+  if (!token) {
+    toast.error("Please login to manage wishlist");
+    return;
+  }
+
+  try {
+    const url = isWishlisted
+      ? `http://localhost:5000/wishlist/remove/${product._id}`
+      : "http://localhost:5000/wishlist/";
+
+    const res = await fetch(url, {
+      method: isWishlisted ? "DELETE" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: !isWishlisted
+        ? JSON.stringify({ productId: product._id })
+        : null,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    setIsWishlisted(!isWishlisted);
+
+    toast.success(
+      isWishlisted
+        ? "Removed from wishlist"
+        : "Added to wishlist"
+    );
+  } catch (err) {
+    toast.error(err.message || "Wishlist failed");
   }
 };
 
@@ -231,15 +335,31 @@ function ProductDetail() {
 
           <div className="flex gap-4">
             <button
-              onClick={handleAddToCart}
-              className="flex-1 bg-black text-white py-3 rounded-md"
+              onClick={handleCartToggle}
+              disabled={cartLoading || isInCart}
+              className={`flex-1 py-3 rounded-md text-white
+                ${isInCart ? "bg-gray-400 cursor-not-allowed" : "bg-black"}
+              `}
             >
-              <ShoppingCart className="inline mr-2" /> Add to Cart
+              <ShoppingCart className="inline mr-2" />
+              {isInCart ? "Added to Cart" : "Add to Cart"}
             </button>
 
-            <button className="flex-1 border py-3 rounded-md">
-              <Heart className="inline mr-2" /> Wishlist
+
+
+            <button
+              onClick={handleWishlistToggle}
+              className={`flex-1 border py-3 rounded-md flex items-center justify-center gap-2
+                ${isWishlisted ? "text-red-600 border-red-500" : ""}`}
+            >
+              <Heart
+                className={`h-5 w-5 ${
+                  isWishlisted ? "fill-red-500 text-red-500" : ""
+                }`}
+              />
+              {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
             </button>
+
           </div>
         </div>
       </section>

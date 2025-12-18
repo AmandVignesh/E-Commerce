@@ -1,5 +1,5 @@
 import { ProductModel } from "../models/productsModel.js";
-
+import { WishlistModel } from "../models/wishlistModel.js";
 export const getProducts = async(req, res)=>{
     try {
         const products = await ProductModel.find();
@@ -14,29 +14,50 @@ export const getProducts = async(req, res)=>{
     }
 }
 
-export const getProductById = async(req,res)=>{
-    try {
-        const {id} = req.params;
-        const product = await ProductModel.findById(id);
-        if(!product){
-            return res.status(404).json({
-                error:"Product Not Found",
-                success:false
-            })
-        }
-        res.status(200).json({
-            message:"Product fetched succesfullymby Id",
-            success:true,
-            product
-        })
-    } catch (error) {
-        console.log("server error while fetching products by id", error);
-        res.status(500).json({
-            error:"Server error while fetching products by id",
-            success:false
-        })
+export const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await ProductModel.findById(id);
+    if (!product) {
+      return res.status(404).json({
+        error: "Product Not Found",
+        success: false,
+      });
     }
-}
+
+    let isWishlisted = false;
+
+    // ✅ Check wishlist only if user is logged in
+    if (req.user) {
+      const wishlist = await WishlistModel.findOne({
+        user: req.user.userId,
+      });
+
+      if (wishlist) {
+        isWishlisted = wishlist.items.some(
+          (item) => item.product.toString() === product._id.toString()
+        );
+      }
+    }
+
+    res.status(200).json({
+      message: "Product fetched successfully by Id",
+      success: true,
+      product: {
+        ...product.toObject(),
+        isWishlisted, // ✅ computed value
+      },
+    });
+  } catch (error) {
+    console.log("server error while fetching products by id", error);
+    res.status(500).json({
+      error: "Server error while fetching products by id",
+      success: false,
+    });
+  }
+};
+
 export const getProductsByCategory = async(req,res)=>{
     try {
         const {category} = req.params;

@@ -31,10 +31,8 @@ function App() {
             Authorization: `Bearer ${Cookies.get("Jwt_token")}`
           }
         });
-        console.log(res)
         const data = await res.json();
         if (res.ok) {
-          console.log(data)
           const items = data.cartProducts?.items || data.cart?.items || [];
           const totalQty = items.reduce(
             (sum, item) => sum + item.quantity,
