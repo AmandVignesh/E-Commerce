@@ -1,10 +1,20 @@
 import { useState, useEffect } from "react";
-import {ShoppingCart,CreditCard,Lock,Truck,RefreshCw,Shield,Plus,Minus,Check} from "lucide-react";
+import {
+  ShoppingCart,
+  CreditCard,
+  Lock,
+  Truck,
+  RefreshCw,
+  Shield,
+  Check,
+} from "lucide-react";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
+
 export default function CheckoutPage() {
-  /* ---------------- USER TOKEN ---------------- */
+  /* ---------------- CONFIG ---------------- */
   const token = Cookies.get("Jwt_token");
+  const API_URL = import.meta.env.VITE_API_URL;
 
   /* ---------------- FORM STATE ---------------- */
   const [formData, setFormData] = useState({
@@ -20,7 +30,7 @@ export default function CheckoutPage() {
     expiryDate: "",
     cvv: "",
   });
-  const API_URL = import.meta.env.VITE_API_URL;
+
   const [errors, setErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("card");
 
@@ -43,7 +53,6 @@ export default function CheckoutPage() {
         });
 
         const data = await res.json();
-
         const cartItems = data.cart?.items || data.cartProducts?.items || [];
 
         setItems(
@@ -63,7 +72,7 @@ export default function CheckoutPage() {
     };
 
     fetchCart();
-  }, [token]);
+  }, [token, API_URL]);
 
   if (loadingCart) {
     return (
@@ -73,44 +82,27 @@ export default function CheckoutPage() {
     );
   }
 
-  /* ---------------- CALCULATIONS ---------------- */
-  const shippingFee = 99;
-  const taxRate = 0.18;
+  /* ---------------- PRICE LOGIC ---------------- */
+  const DISCOUNT_PERCENT = 25;
+  const TAX_RATE = 0.1;
+  const SHIPPING_FEE = items.length > 0 ? 50 : 0;
+
+  const discountedPrice = (price) =>
+    price - (price * DISCOUNT_PERCENT) / 100;
 
   const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) =>
+      sum + discountedPrice(item.price) * item.quantity,
     0
   );
 
-  const tax = subtotal * taxRate;
-  const total = subtotal + tax + shippingFee;
+  const tax = subtotal * TAX_RATE;
+  const total = subtotal + tax + SHIPPING_FEE;
 
   /* ---------------- HANDLERS ---------------- */
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: false });
-  };
-
-  const clearCart = async () => {
-    try {
-      const res = await fetch(`${API_URL}/cart/clear`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to clear cart");
-      }
-
-      setItems({ items: [] });
-    } catch (error) {
-      console.error("Clear cart error:", error);
-      alert(error.message);
-    }
   };
 
   const validateForm = () => {
@@ -139,41 +131,38 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = () => {
-    if (!validateForm()){
-        toast.error("Please Enter all details");
-        return
-    } 
-    //clearCart()
-    toast.success("Order placed successfully!");
+    if (!validateForm()) {
+      toast.error("Please fill all required details");
+      return;
+    }
 
+    toast.success("Order placed successfully!");
   };
 
   /* ---------------- UI ---------------- */
   return (
     <div className="min-h-screen bg-gray-50">
       {/* HEADER */}
-      <header className="bg-white border-b  top-0">
+      <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center gap-3 mb-4">
-            <ShoppingCart className="w-8 h-8 text-black" />
+            <ShoppingCart className="w-8 h-8" />
             <div>
               <h1 className="text-3xl font-bold">Checkout</h1>
               <p className="text-gray-500">Complete your purchase securely</p>
             </div>
           </div>
 
-          {/* Progress */}
-          <div className="flex items-center gap-2 max-w-2xl">
+          <div className="flex gap-2 max-w-xl">
             {["Cart", "Checkout", "Payment", "Done"].map((step, i) => (
-              <div key={step} className="flex items-center flex-1 gap-2">
+              <div key={step} className="flex items-center gap-2 flex-1">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
                   ${i < 2 ? "bg-black text-white" : "bg-gray-200 text-gray-500"}`}
                 >
-                  {i === 0 ? <Check className="w-4 h-4" /> : i + 1}
+                  {i === 0 ? <Check size={16} /> : i + 1}
                 </div>
                 <span className="hidden sm:inline text-sm">{step}</span>
-                {i < 3 && <div className="flex-1 h-0.5 bg-gray-300" />}
               </div>
             ))}
           </div>
@@ -263,40 +252,59 @@ export default function CheckoutPage() {
         </div>
 
         {/* RIGHT */}
-        <div className="lg:sticky lg:top-24 bg-white rounded-xl shadow p-6 h-fit">
+        <div className="bg-white rounded-xl shadow p-6 h-fit">
           <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
 
-          {items.map((item) => (
-            <div key={item._id} className="flex items-center gap-4 mb-6 border-b pb-4">
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-10 h-10 object-cover rounded"
-              />
-              <div className="flex-1">
-                <h3 className="font-medium">{item.title}</h3>
-                <p className="text-sm text-gray-500">${item.price}</p>
-              </div>
-            </div>
-          ))}
+          {items.map((item) => {
+            const finalPrice = discountedPrice(item.price);
+            return (
+              <div
+                key={item._id}
+                className="flex items-center gap-4 mb-4 border-b pb-3"
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="w-12 h-12 rounded object-cover"
+                />
 
-          {/* PRICE SUMMARY */}
-          <div className="space-y-2 text-sm mb-4">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium">{item.title}</h3>
+                  <div className="flex gap-2 text-sm items-center">
+                    <span className="line-through text-gray-400">
+                      ${item.price}
+                    </span>
+                    <span className="font-semibold">
+                      ${finalPrice.toFixed(2)}
+                    </span>
+                    <span className="text-xs text-green-600">
+                      (25% OFF)
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Qty: {item.quantity}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="space-y-2 text-sm mt-4">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>${subtotal}</span>
+              <span>${subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Tax</span>
+              <span>Tax (10%)</span>
               <span>${tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span>${shippingFee}</span>
+              <span>${SHIPPING_FEE}</span>
             </div>
           </div>
 
-          <div className="flex justify-between font-bold text-lg mb-6">
+          <div className="flex justify-between font-bold text-lg my-6">
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
           </div>

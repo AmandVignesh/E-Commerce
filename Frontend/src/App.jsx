@@ -13,7 +13,7 @@ import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import Wishlist from './components/Wishlist.jsx';
 import Protected from './components/Protected.jsx';
-import CartDrawer from "./components/Cart.jsx"; // ✅ ADD THIS
+import CartDrawer from "./components/Cart.jsx"; 
 import Cookies from "js-cookie";
 import CheckoutPage from './components/Checkout.jsx';
 function App() {

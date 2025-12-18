@@ -124,14 +124,6 @@ export default function CartDrawer({ open, onClose }) {
   const calculateDiscountedPrice = (price) =>
     price - (price * DISCOUNT_PERCENTAGE) / 100;
 
-  const subtotal = cart.items.reduce((total, item) => {
-    const discountedPrice = calculateDiscountedPrice(item.product.price);
-    return total + discountedPrice * item.quantity;
-  }, 0);
-
-  const tax = subtotal * 0.1;
-  const shipping = subtotal > 0 ? 10 : 0;
-  const total = subtotal + tax + shipping;
 
   if (!open) return null;
 
@@ -206,25 +198,7 @@ export default function CartDrawer({ open, onClose }) {
         )}
 
         {/* Summary */}
-        <div className="border-t pt-4 mt-6 text-sm space-y-2">
-          <div className="flex justify-between">
-            <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Tax (10%)</span>
-            <span>${tax.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Shipping</span>
-            <span>${shipping.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div className="flex justify-between font-bold text-lg mt-4">
-          <span>Total:</span>
-          <span>${total.toFixed(2)}</span>
-        </div>
+       
 
         {/* Actions */}
         <button onClick={()=>{

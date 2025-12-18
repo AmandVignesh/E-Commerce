@@ -9,6 +9,11 @@ function ProductCard({ product, showRemove = false, onRemove }) {
   const [loading, setLoading] = useState(false);
   const token = Cookies.get("Jwt_token");
   const API_URL = import.meta.env.VITE_API_URL;
+  const discountPercentage = 25;
+  const discountedPrice = (
+    product.price -(product.price * discountPercentage) / 100
+  ).toFixed(2);
+
 
   /* ---------------- CHECK CART ---------------- */
   const checkProductInCart = useCallback(async () => {
@@ -89,9 +94,15 @@ function ProductCard({ product, showRemove = false, onRemove }) {
           </p>
 
           <div className="flex items-center justify-between gap-2">
-            <span className="text-lg font-bold text-black">
-              ${product.price}
-            </span>
+            <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-black">
+                    ${discountedPrice}
+                </span>
+                <span className="text-sm text-gray-400 line-through">
+                    ${product.price}
+                </span>
+            </div>
+
 
             <div className="flex gap-2">
               <button
