@@ -14,6 +14,40 @@ const userSchema = new mongoose.Schema({
     password:{
         type:String,
         required:true
+    },
+    profile:{
+        phone: {
+            type: String,
+            default: ""
+        },
+        address: {
+            type: String,
+            default: ""
+        },
+        city: {
+            type: String,
+            default: ""
+        },
+        state: {
+            type: String,
+            default: ""
+        },
+        pincode: {
+            type: String,
+            default: ""
+        },
+        country: {
+            type: String,
+            default: ""
+        }
+    },
+    orders:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Order"
+    }],
+    createdAt:{
+        type:Date,
+        default:Date.now
     }
 })
 

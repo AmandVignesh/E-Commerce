@@ -7,6 +7,8 @@ import authRouter from "./routes/authRoute.js";
 import productRouter from "./routes/productsRoute.js";
 import wishlistRouter from "./routes/wishListRoute.js";
 import cartRouter from "./routes/cartRoute.js";
+import paymentRouter from "./routes/paymentRoute.js";
+import profileRouter from "./routes/profileRoute.js";
 const app = express();
 
 app.use(cors());
@@ -17,6 +19,8 @@ app.use("/auth/", authRouter)
 app.use("/product/",productRouter)
 app.use("/wishlist/",wishlistRouter)
 app.use("/cart", cartRouter)
+app.use("/payment/", paymentRouter)
+app.use("/profile/", profileRouter)
 
 const PORT = process.env.port || 3000;
 const url = process.env.mongo_url;
