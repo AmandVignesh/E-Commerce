@@ -13,12 +13,10 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
 export default function CheckoutPage() {
-  /* ---------------- CONFIG ---------------- */
   const token = Cookies.get("Jwt_token");
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
-  /* ---------------- FORM STATE ---------------- */
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -33,12 +31,9 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
-
-  /* ---------------- CART STATE ---------------- */
   const [items, setItems] = useState([]);
   const [loadingCart, setLoadingCart] = useState(true);
 
-  /* ---------------- FETCH CART ---------------- */
   useEffect(() => {
     const fetchCart = async () => {
       if (!token) {
@@ -74,6 +69,13 @@ export default function CheckoutPage() {
     fetchCart();
   }, [token, API_URL]);
 
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   if (loadingCart) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg">
@@ -82,7 +84,6 @@ export default function CheckoutPage() {
     );
   }
 
-  /* ---------------- PRICE LOGIC ---------------- */
   const DISCOUNT_PERCENT = 25;
   const TAX_RATE = 0.1;
   const SHIPPING_FEE = items.length > 0 ? 50 : 0;
@@ -99,7 +100,6 @@ export default function CheckoutPage() {
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax + SHIPPING_FEE;
 
-  /* ---------------- HANDLERS ---------------- */
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: false });
@@ -125,17 +125,6 @@ export default function CheckoutPage() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const loadRazorpay = () => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  };
-
-  useEffect(() => {
-    loadRazorpay();
-  }, []);
 
   const handlePlaceOrder = async () => {
     if (!validateForm()) {
@@ -243,10 +232,8 @@ export default function CheckoutPage() {
     }
   };
 
-  /* ---------------- UI ---------------- */
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* HEADER */}
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center gap-3 mb-4">
@@ -273,11 +260,8 @@ export default function CheckoutPage() {
         </div>
       </header>
 
-      {/* CONTENT */}
       <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* LEFT */}
         <div className="lg:col-span-2 space-y-6">
-          {/* SHIPPING */}
           <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-xl font-semibold mb-6">
               Shipping Information
@@ -331,7 +315,6 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* PAYMENT */}
           <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-xl font-semibold mb-6">Payment Method</h2>
 
@@ -355,7 +338,6 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* RIGHT */}
         <div className="bg-white rounded-xl shadow p-6 h-fit">
           <h2 className="text-xl font-semibold mb-6">Order Summary</h2>
 
@@ -427,7 +409,6 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* FOOTER */}
       <footer className="border-t bg-white mt-10">
         <div className="max-w-7xl mx-auto px-6 py-8 grid sm:grid-cols-3 gap-6 text-center">
           <div>

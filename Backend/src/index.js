@@ -11,7 +11,9 @@ import paymentRouter from "./routes/paymentRoute.js";
 import profileRouter from "./routes/profileRoute.js";
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: "*",
+}));
 
 app.use(express.json());
 
@@ -20,7 +22,7 @@ app.use("/product/",productRouter)
 app.use("/wishlist/",wishlistRouter)
 app.use("/cart", cartRouter)
 app.use("/payment/", paymentRouter)
-app.use("/profile/", profileRouter)
+app.use("/profile", profileRouter)
 
 const PORT = process.env.port || 3000;
 const url = process.env.mongo_url;

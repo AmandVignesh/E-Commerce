@@ -3,7 +3,7 @@ import { OrderModel } from "../models/orderModel.js";
 
 export const getUserProfile = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.userId;
 
     const user = await UserModel.findById(userId).select("-password");
 
