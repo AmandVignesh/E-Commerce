@@ -54,14 +54,19 @@ export default function Profile() {
         if (profileRes.ok) {
           setUser(profileData.user);
           setFormData(profileData.user.profile || {});
+        } else {
+          console.error("Profile API error:", profileData);
+          toast.error(profileData.error || "Failed to load profile");
         }
 
         if (activitiesRes.ok) {
           setActivities(activitiesData.activities);
+        } else {
+          console.error("Activities API error:", activitiesData);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        toast.error("Failed to load profile");
+        toast.error("Failed to load profile. Please check your connection.");
       } finally {
         setLoading(false);
       }
