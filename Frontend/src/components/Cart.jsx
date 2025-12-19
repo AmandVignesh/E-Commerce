@@ -145,8 +145,8 @@ export default function CartDrawer({ open, onClose }) {
         </div>
         {/* 🔥 FULL-PAGE LOADER OVERLAY */}
         {loading && (
-            <div className="w-[100%] bg-white h-full p-6 overflow-y-auto relative">
-            <Loader />
+            <div className="w-full bg-white h-full p-6 overflow-y-auto relative">
+                <Loader />
             </div>
         )}
         {/* Items */}
