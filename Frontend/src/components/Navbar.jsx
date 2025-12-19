@@ -101,13 +101,22 @@ export function Header({setOpenCart, openCart, cartCount}) {
                 </button>
 
                 {login ? (
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 px-3 py-2 rounded-full border hover:bg-muted text-sm"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span className="hidden lg:inline">Logout</span>
-                  </button>
+                  <>
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-2 px-3 py-2 rounded-full border hover:bg-muted text-sm"
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="hidden lg:inline">Profile</span>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 px-3 py-2 rounded-full border hover:bg-muted text-sm"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="hidden lg:inline">Logout</span>
+                    </button>
+                  </>
                 ) : (
                   <Link
                     to="/login"

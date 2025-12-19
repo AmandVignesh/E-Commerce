@@ -10,11 +10,13 @@ import {
 } from "lucide-react";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export default function CheckoutPage() {
   /* ---------------- CONFIG ---------------- */
   const token = Cookies.get("Jwt_token");
   const API_URL = import.meta.env.VITE_API_URL;
+  const navigate = useNavigate();
 
   /* ---------------- FORM STATE ---------------- */
   const [formData, setFormData] = useState({
@@ -26,13 +28,11 @@ export default function CheckoutPage() {
     state: "",
     pincode: "",
     country: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
   });
 
   const [errors, setErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("card");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   /* ---------------- CART STATE ---------------- */
   const [items, setItems] = useState([]);
@@ -117,10 +117,6 @@ export default function CheckoutPage() {
       "country",
     ];
 
-    if (paymentMethod === "card") {
-      required.push("cardNumber", "expiryDate", "cvv");
-    }
-
     const newErrors = {};
     required.forEach((f) => {
       if (!formData[f]) newErrors[f] = true;
@@ -130,13 +126,121 @@ export default function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePlaceOrder = () => {
+  const loadRazorpay = () => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  };
+
+  useEffect(() => {
+    loadRazorpay();
+  }, []);
+
+  const handlePlaceOrder = async () => {
     if (!validateForm()) {
       toast.error("Please fill all required details");
       return;
     }
 
-    toast.success("Order placed successfully!");
+    setIsProcessing(true);
+
+    try {
+      const shippingInfo = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
+        country: formData.country,
+      };
+
+      const orderRes = await fetch(`${API_URL}/payment/create-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items,
+          shippingInfo,
+          pricing: { subtotal, tax, shipping: SHIPPING_FEE, total },
+          paymentMethod,
+        }),
+      });
+
+      const orderData = await orderRes.json();
+
+      if (!orderRes.ok) {
+        toast.error(orderData.error || "Failed to create order");
+        setIsProcessing(false);
+        return;
+      }
+
+      if (paymentMethod === "cod") {
+        toast.success("Order placed successfully!");
+        setTimeout(() => navigate("/profile"), 1500);
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        order_id: orderData.razorpayOrderId,
+        handler: async (response) => {
+          try {
+            const verifyRes = await fetch(`${API_URL}/payment/verify-payment`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                orderId: orderData.orderId,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok) {
+              toast.error("Payment verification failed");
+              return;
+            }
+
+            toast.success("Payment successful! Order confirmed");
+            setTimeout(() => navigate("/profile"), 1500);
+          } catch (error) {
+            console.error("Verification error:", error);
+            toast.error("Payment verification failed");
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#000000",
+        },
+      };
+
+      if (window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error("Failed to process order");
+      setIsProcessing(false);
+    }
   };
 
   /* ---------------- UI ---------------- */
@@ -245,7 +349,7 @@ export default function CheckoutPage() {
                 {m === "card" && <CreditCard />}
                 {m === "upi" && <span>₹</span>}
                 {m === "cod" && <Truck />}
-                <span className="capitalize">{m}</span>
+                <span className="capitalize">{m === "card" ? "Card" : m === "upi" ? "UPI" : "Cash on Delivery"}</span>
               </label>
             ))}
           </div>
@@ -272,10 +376,10 @@ export default function CheckoutPage() {
                   <h3 className="text-sm font-medium">{item.title}</h3>
                   <div className="flex gap-2 text-sm items-center">
                     <span className="line-through text-gray-400">
-                      ${item.price}
+                      ₹{item.price}
                     </span>
                     <span className="font-semibold">
-                      ${finalPrice.toFixed(2)}
+                      ₹{finalPrice.toFixed(2)}
                     </span>
                     <span className="text-xs text-green-600">
                       (25% OFF)
@@ -292,28 +396,29 @@ export default function CheckoutPage() {
           <div className="space-y-2 text-sm mt-4">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span>Tax (10%)</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>₹{tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span>${SHIPPING_FEE}</span>
+              <span>₹{SHIPPING_FEE}</span>
             </div>
           </div>
 
           <div className="flex justify-between font-bold text-lg my-6">
             <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+            <span>₹{total.toFixed(2)}</span>
           </div>
 
           <button
             onClick={handlePlaceOrder}
-            className="w-full bg-black text-white py-3 rounded-lg flex justify-center gap-2"
+            disabled={isProcessing}
+            className="w-full bg-black text-white py-3 rounded-lg flex justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Lock size={16} /> Place Order
+            <Lock size={16} /> {isProcessing ? "Processing..." : "Place Order"}
           </button>
 
           <p className="text-xs text-center text-gray-500 mt-3 flex justify-center gap-1">

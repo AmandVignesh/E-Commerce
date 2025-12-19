@@ -16,6 +16,8 @@ import Protected from './components/Protected.jsx';
 import CartDrawer from "./components/Cart.jsx"; 
 import Cookies from "js-cookie";
 import CheckoutPage from './components/Checkout.jsx';
+import Loader from './components/Loader.jsx';
+import Profile from './components/Profile.jsx';
 function App() {
   // ✅ CART STATE
   const API_URL = import.meta.env.VITE_API_URL;
@@ -71,7 +73,8 @@ function App() {
           <Route path='/contact' element={<Protected><ContactPage/></Protected>}/>
           <Route path='/shop' element={<Protected><ShopPage/></Protected>}/>
           <Route path='/checkout' element={<Protected><CheckoutPage/></Protected>}/>
-        
+          <Route path='/profile' element={<Protected><Profile/></Protected>}/>
+          
       </Routes>
     </BrowserRouter>
   )

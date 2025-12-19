@@ -108,7 +108,7 @@ export default function ShopPage() {
       
 
         {/* Filters */}
-        <aside className="w-64 bg-white p-4 mt-10 rounded border">
+        <aside className="w-72 bg-white p-4 mt-10 rounded border">
           <h2 className="font-semibold mb-3">Filters</h2>
 
           <input

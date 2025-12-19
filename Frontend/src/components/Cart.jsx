@@ -3,23 +3,27 @@ import { X, Trash2 } from "lucide-react";
 import Cookies from "js-cookie";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import Loader from "./Loader.jsx";
 const DISCOUNT_PERCENTAGE = 25;
 
 export default function CartDrawer({ open, onClose }) {
   const API_URL = import.meta.env.VITE_API_URL;
   const [cart, setCart] = useState({ items: [] });
   const token = Cookies.get("Jwt_token");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   /* ---------------- FETCH CART ---------------- */
   const fetchCart = useCallback(async () => {
-     if (!token) return;
+    if (!token) return;
 
     try {
+      setLoading(true);
+
       const res = await fetch(`${API_URL}/cart/getCart`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await res.json();
@@ -31,6 +35,8 @@ export default function CartDrawer({ open, onClose }) {
       setCart(data.cartProducts || data.cart || { items: [] });
     } catch (error) {
       console.error("Fetch cart error:", error);
+    } finally {
+      setLoading(false); // 🔥 always stop loader
     }
   }, [token]);
 
@@ -39,7 +45,7 @@ export default function CartDrawer({ open, onClose }) {
     if (open && token) {
       fetchCart();
     }
-  },[open, token, fetchCart]);
+  }, [open, token, fetchCart]);
 
   /* ---------------- ADD ITEM ---------------- */
   const addItem = async (id) => {
@@ -48,9 +54,9 @@ export default function CartDrawer({ open, onClose }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ productId: id })
+        body: JSON.stringify({ productId: id }),
       });
 
       fetchCart();
@@ -66,9 +72,9 @@ export default function CartDrawer({ open, onClose }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ productId: id })
+        body: JSON.stringify({ productId: id }),
       });
 
       fetchCart();
@@ -85,9 +91,9 @@ export default function CartDrawer({ open, onClose }) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ productId: id })
+          body: JSON.stringify({ productId: id }),
         });
       }
 
@@ -103,8 +109,8 @@ export default function CartDrawer({ open, onClose }) {
       const res = await fetch(`${API_URL}/cart/clear`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await res.json();
@@ -120,16 +126,16 @@ export default function CartDrawer({ open, onClose }) {
     }
   };
 
-  
   const calculateDiscountedPrice = (price) =>
     price - (price * DISCOUNT_PERCENTAGE) / 100;
-
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm ">
-      <div className="w-[420px] bg-white h-full p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm">
+
+      <div className="w-[420px] bg-white h-full p-6 overflow-y-auto relative">
+
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Shopping Cart</h2>
@@ -137,9 +143,14 @@ export default function CartDrawer({ open, onClose }) {
             <X />
           </button>
         </div>
-
+        {/* 🔥 FULL-PAGE LOADER OVERLAY */}
+        {loading && (
+            <div className="w-[100%] bg-white h-full p-6 overflow-y-auto relative">
+            <Loader />
+            </div>
+        )}
         {/* Items */}
-        {cart.items.length === 0 ? (
+        {!loading && cart.items.length === 0 ? (
           <p className="text-gray-500">Your cart is empty</p>
         ) : (
           cart.items.map((item) => {
@@ -161,7 +172,7 @@ export default function CartDrawer({ open, onClose }) {
                 <div className="flex-1">
                   <h4 className="font-semibold">{item.product.title}</h4>
                   <p className="text-blue-600 font-bold">
-                    ${discountedPrice.toFixed(2)}
+                    ₹{discountedPrice.toFixed(2)}
                   </p>
 
                   <div className="flex items-center gap-2 mt-2">
@@ -183,10 +194,7 @@ export default function CartDrawer({ open, onClose }) {
 
                 <button
                   onClick={() =>
-                    removeItemCompletely(
-                      item.product._id,
-                      item.quantity
-                    )
+                    removeItemCompletely(item.product._id, item.quantity)
                   }
                   className="text-gray-400"
                 >
@@ -197,22 +205,25 @@ export default function CartDrawer({ open, onClose }) {
           })
         )}
 
-        {/* Summary */}
-       
-
-        {/* Actions */}
-        <button onClick={()=>{
+        {/* Checkout Button */}
+        <button
+          onClick={() => {
             onClose();
-            navigate("/checkout")
-        }} className="w-full mt-4 bg-[#000000] text-white py-3 rounded">
+            navigate("/checkout");
+          }}
+          className="w-full mt-4 bg-[#000000] text-white py-3 rounded"
+        >
           Proceed to Checkout
         </button>
 
         <div className="flex gap-4 mt-3">
-          <button onClick={()=>{
-            onClose()
-            navigate("/shop")
-          }} className="flex-1 border text-center py-2 rounded">
+          <button
+            onClick={() => {
+              onClose();
+              navigate("/shop");
+            }}
+            className="flex-1 border text-center py-2 rounded"
+          >
             Continue Shopping
           </button>
           <button

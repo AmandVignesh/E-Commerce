@@ -96,10 +96,10 @@ function ProductCard({ product, showRemove = false, onRemove }) {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-black">
-                    ${discountedPrice}
+                    ₹{discountedPrice}
                 </span>
                 <span className="text-sm text-gray-400 line-through">
-                    ${product.price}
+                    ₹{product.price}
                 </span>
             </div>
 

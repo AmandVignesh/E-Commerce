@@ -4,6 +4,7 @@ import { Heart, ShoppingCart, Star } from "lucide-react";
 import ImageMagnifier from "./Zoom.jsx";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
+import Loader from "./Loader.jsx";
 
 function ProductDetail() {
   const { id } = useParams();
@@ -263,7 +264,7 @@ const handleWishlistToggle = async () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg font-semibold">Loading product...</p>
+        <Loader/>
       </div>
     );
   }
@@ -327,9 +328,9 @@ const handleWishlistToggle = async () => {
 
           {/* Price */}
           <div className="flex gap-3 items-center">
-            <span className="text-3xl font-bold">${discountedPrice}</span>
+            <span className="text-3xl font-bold">₹{discountedPrice}</span>
             <span className="line-through text-gray-400">
-              ${originalPrice}
+              ₹{originalPrice}
             </span>
           </div>
 
