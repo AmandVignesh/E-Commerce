@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 import ProductCard from "./ProductCard";
 import { HeartCrack, Package } from "lucide-react";
 import { Link } from "react-router-dom";
-
+import Loader from "./Loader.jsx";
 export default function WishlistPage() {
   const token = Cookies.get("Jwt_token");
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -37,7 +37,7 @@ export default function WishlistPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Loading wishlist...
+          <Loader />
       </div>
     );
   }

@@ -13,12 +13,27 @@ const razorpay = new Razorpay({
 export const createRazorpayOrder = async (req, res) => {
   try {
     const { items, shippingInfo, pricing, paymentMethod } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.userId;
 
+    // ---------------------- FIX: Format Items ----------------------
+    const formattedItems = items.map((item) => ({
+      product: item.product || item._id || item.id,
+      quantity: item.quantity,
+    }));
+
+    // If product ID is missing from any item, throw a clean error
+    if (formattedItems.some(i => !i.product)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid items: Product field missing in one or more items."
+      });
+    }
+
+    // ---------------------- COD ORDER FLOW ----------------------
     if (paymentMethod === "cod") {
       const order = await OrderModel.create({
         user: userId,
-        items,
+        items: formattedItems,
         shippingInfo,
         paymentInfo: {
           method: "cod",
@@ -28,12 +43,14 @@ export const createRazorpayOrder = async (req, res) => {
         status: "confirmed",
       });
 
+      // Add order to user profile
       await UserModel.findByIdAndUpdate(
         userId,
         { $push: { orders: order._id }, profile: shippingInfo },
         { new: true }
       );
 
+      // Clear Cart
       await CartModel.findOneAndUpdate({ user: userId }, { items: [] });
 
       return res.json({
@@ -43,17 +60,20 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
+    // ---------------------- RAZORPAY ORDER FLOW ----------------------
+
     const options = {
-      amount: Math.round(pricing.total * 100),
+      amount: Math.round(pricing.total * 100), // Convert to paise
       currency: "INR",
       receipt: `order_${Date.now()}`,
     };
 
     const razorpayOrder = await razorpay.orders.create(options);
 
+    // Create DB order with Razorpay ID
     const order = await OrderModel.create({
       user: userId,
-      items,
+      items: formattedItems,
       shippingInfo,
       paymentInfo: {
         method: paymentMethod,
@@ -61,9 +81,11 @@ export const createRazorpayOrder = async (req, res) => {
         status: "pending",
       },
       pricing,
+      status: "pending",
     });
 
-    res.json({
+    // Send details to frontend
+    return res.json({
       success: true,
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
@@ -71,11 +93,17 @@ export const createRazorpayOrder = async (req, res) => {
       orderId: order._id,
       keyId: process.env.Razor_Pay_Key_ID,
     });
+
   } catch (error) {
     console.error("Error creating Razorpay order:", error);
-    res.status(500).json({ error: "Failed to create order" });
+    return res.status(500).json({
+      success: false,
+      error: "Failed to create order",
+      details: error.message,
+    });
   }
 };
+
 
 export const verifyPayment = async (req, res) => {
   try {

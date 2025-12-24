@@ -10,10 +10,11 @@ function ProductCard({ product, showRemove = false, onRemove }) {
   const token = Cookies.get("Jwt_token");
   const API_URL = import.meta.env.VITE_API_URL;
   const discountPercentage = 25;
+  const price = (product.price.toFixed(2))*4
   const discountedPrice = (
-    product.price -(product.price * discountPercentage) / 100
+    price -(price * discountPercentage) / 100
   ).toFixed(2);
-
+  
 
   /* ---------------- CHECK CART ---------------- */
   const checkProductInCart = useCallback(async () => {
@@ -70,7 +71,7 @@ function ProductCard({ product, showRemove = false, onRemove }) {
   return (
     <Link
       to={`/product/${product._id}`}
-      className="w-[20%] h-[25%] rounded-lg z-10 shadow-2xl"
+      className="w-[23%] h-[25%] rounded-lg z-10 shadow-2xl "
     >
       <div className="relative overflow-hidden rounded-xl bg-white border border-gray-100 transition-all duration-300 hover:shadow-md">
 
@@ -99,7 +100,7 @@ function ProductCard({ product, showRemove = false, onRemove }) {
                     ₹{discountedPrice}
                 </span>
                 <span className="text-sm text-gray-400 line-through">
-                    ₹{product.price}
+                    ₹{price}
                 </span>
             </div>
 

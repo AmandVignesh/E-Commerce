@@ -1,22 +1,13 @@
 import { useState, useEffect } from "react";
-import {
-  ShoppingCart,
-  CreditCard,
-  Lock,
-  Truck,
-  RefreshCw,
-  Shield,
-  Check,
-} from "lucide-react";
+import {ShoppingCart,CreditCard,Lock,Truck,RefreshCw,Shield,Check} from "lucide-react";
 import Cookies from "js-cookie";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-
+import Loader from "./Loader.jsx";
 export default function CheckoutPage() {
   const token = Cookies.get("Jwt_token");
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -27,13 +18,12 @@ export default function CheckoutPage() {
     pincode: "",
     country: "",
   });
-
+  
   const [errors, setErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
   const [items, setItems] = useState([]);
   const [loadingCart, setLoadingCart] = useState(true);
-
   useEffect(() => {
     const fetchCart = async () => {
       if (!token) {
@@ -78,9 +68,9 @@ export default function CheckoutPage() {
 
   if (loadingCart) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg">
-        Loading your cart...
-      </div>
+        <div className="min-h-screen flex items-center justify-center text-lg">
+            <Loader />
+        </div>
     );
   }
 
@@ -89,7 +79,7 @@ export default function CheckoutPage() {
   const SHIPPING_FEE = items.length > 0 ? 50 : 0;
 
   const discountedPrice = (price) =>
-    price - (price * DISCOUNT_PERCENT) / 100;
+    ((price)*4) - ((price*4) * DISCOUNT_PERCENT) / 100;
 
   const subtotal = items.reduce(
     (sum, item) =>
@@ -195,7 +185,7 @@ export default function CheckoutPage() {
               }),
             });
 
-            const verifyData = await verifyRes.json();
+            //const verifyData = await verifyRes.json();
 
             if (!verifyRes.ok) {
               toast.error("Payment verification failed");
@@ -358,7 +348,7 @@ export default function CheckoutPage() {
                   <h3 className="text-sm font-medium">{item.title}</h3>
                   <div className="flex gap-2 text-sm items-center">
                     <span className="line-through text-gray-400">
-                      ₹{item.price}
+                      ₹{(item.price)*4}
                     </span>
                     <span className="font-semibold">
                       ₹{finalPrice.toFixed(2)}

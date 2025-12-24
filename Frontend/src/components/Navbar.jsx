@@ -3,7 +3,6 @@ import {Heart,ShoppingCart,User,Menu,X,Search,LogOut} from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import Cookies from "js-cookie";
 import CartDrawer from "./Cart.jsx";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
 export function Header({setOpenCart, openCart, cartCount}) {
@@ -11,16 +10,12 @@ export function Header({setOpenCart, openCart, cartCount}) {
   const isCheckoutPage = location.pathname === "/checkout";
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate()
   
   const navItems = ["Home", "Shop", "About Us", "Contact"];
   const login = !!Cookies.get("Jwt_token");
   
 
-  const handleLogout = () => {
-    Cookies.remove("Jwt_token");
-    navigate("/")
-  };
+  
 
   
 
@@ -28,11 +23,11 @@ export function Header({setOpenCart, openCart, cartCount}) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-white">
         <div className=" mx-10 px-4 sm:px-6 lg:px-8">
           {/* Desktop Header */}
           <div className="hidden md:flex items-center justify-between h-20">
-            <div className="flex w-[50%]">
+            <div className="flex ">
               {/* Logo */}
               <div className="flex items-center gap-2 mr-10 shrink-0">
                 <div className="w-9 h-9 bg-black rounded-xl bg-primary/10 flex items-center justify-center">
@@ -60,7 +55,7 @@ export function Header({setOpenCart, openCart, cartCount}) {
                       key={item}
                       to={path}
                       className={({ isActive }) =>
-                        `flex items-center justify-start px-2 py-1 text-[#000000] hover:bg-[#000000] hover:text-white rounded ${
+                        `flex items-center justify-start px-4 py-1 text-[#000000] hover:bg-[#000000] hover:text-white rounded ${
                           isActive ? "bg-[#000000] text-white" : ""
                         }`
                       }
@@ -109,13 +104,6 @@ export function Header({setOpenCart, openCart, cartCount}) {
                       <User className="w-4 h-4" />
                       <span className="hidden lg:inline">Profile</span>
                     </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 px-3 py-2 rounded-full border hover:bg-muted text-sm"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span className="hidden lg:inline">Logout</span>
-                    </button>
                   </>
                 ) : (
                   <Link

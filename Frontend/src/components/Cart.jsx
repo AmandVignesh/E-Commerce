@@ -145,7 +145,7 @@ export default function CartDrawer({ open, onClose }) {
         </div>
         {/* 🔥 FULL-PAGE LOADER OVERLAY */}
         {loading && (
-            <div className="w-full bg-white h-full p-6 overflow-y-auto relative">
+            <div className="w-full bg-white h-full p-6 overflow-y-auto flex justify-center items-center">
                 <Loader />
             </div>
         )}
@@ -155,7 +155,7 @@ export default function CartDrawer({ open, onClose }) {
         ) : (
           cart.items.map((item) => {
             const discountedPrice = calculateDiscountedPrice(
-              item.product.price
+              (item.product.price)*4
             );
 
             return (

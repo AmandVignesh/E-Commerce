@@ -73,7 +73,7 @@ export default function ContactPage() {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen p-8">
       {/* Hero */}
       <section className="py-20 text-center bg-gray-50">
         <h1 className="text-4xl font-bold mb-4">Get in Touch with ShopEasy</h1>

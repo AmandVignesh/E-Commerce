@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react"
 import ProductCard from "./ProductCard"
-
+import Loader from "./Loader.jsx"
 import { useLocation } from "react-router-dom"
 export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -10,6 +10,7 @@ export default function ShopPage() {
   const [minRating, setMinRating] = useState(0)
   const [sortBy, setSortBy] = useState("Featured")
   const [products, setProducts] = useState([])
+  const[Loading,setLoading]=useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
   
   /* 🔹 Pagination state */
@@ -21,9 +22,11 @@ export default function ShopPage() {
 
   useEffect(() => {
     const fetchProduct = async () => {
+      setLoading(true);
       const res = await fetch(`${API_URL}/product/products`)
       const data = await res.json()
-      setProducts(data.products)
+      setProducts(data.products);
+      setLoading(false);
     }
     fetchProduct()
   }, [])
@@ -164,6 +167,8 @@ export default function ShopPage() {
             <option>Price: Low to High</option>
             <option>Price: High to Low</option>
           </select>
+          
+            
 
           <button
             onClick={clearFilters}
@@ -172,14 +177,19 @@ export default function ShopPage() {
             Clear Filters
           </button>
         </aside>
-
+          
         {/* Products */}
         <main className="flex-1">
           <p className="mb-4 text-sm text-gray-600">
             {filteredProducts.length} products found
           </p>
 
-          {paginatedProducts.length === 0 ? (
+          {/* ⭐ SHOW LOADER ONLY WHILE PRODUCTS ARE LOADING */}
+          {Loading ? (
+            <div className="flex justify-center items-center py-50">
+              <Loader />
+            </div>
+          ) : paginatedProducts.length === 0 ? (
             <div className="bg-white p-10 text-center border rounded">
               <h3 className="font-semibold mb-2">No products found</h3>
               <button
@@ -202,7 +212,7 @@ export default function ShopPage() {
                 ))}
               </div>
 
-              {/* 🔹 Pagination UI */}
+              {/* PAGINATION */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-8">
                   <button
@@ -237,6 +247,7 @@ export default function ShopPage() {
             </>
           )}
         </main>
+
       </div>
     </div>
   )

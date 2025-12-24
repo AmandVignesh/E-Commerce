@@ -20,7 +20,7 @@ function ProductDetail() {
   const [reviewError, setReviewError] = useState("");
   const [isInCart, setIsInCart] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
-  const originalPrice = Number(product?.price) || 0;
+  const originalPrice = Number((product?.price)*4) || 0;
   const API_URL = import.meta.env.VITE_API_URL;
   const discountPercentage = 25;
   const discountedPrice = (
