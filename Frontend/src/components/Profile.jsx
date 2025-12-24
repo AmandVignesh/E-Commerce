@@ -12,7 +12,7 @@ import {
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-
+import Loader from "./Loader.jsx";
 export default function Profile() {
   const token = Cookies.get("Jwt_token");
   const API_URL = import.meta.env.VITE_API_URL;
@@ -115,7 +115,7 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">Loading profile...</p>
+          <Loader/>
       </div>
     );
   }

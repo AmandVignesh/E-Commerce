@@ -54,7 +54,6 @@ export default function ContactPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validateForm()) return
-
     setIsSubmitting(true)
     await new Promise((r) => setTimeout(r, 1500))
     setIsSubmitting(false)
@@ -125,7 +124,6 @@ export default function ContactPage() {
                     }}
                     className="w-full border p-3 rounded"
                 />
-
               </div>
 
               <input
