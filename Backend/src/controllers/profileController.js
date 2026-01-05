@@ -53,10 +53,8 @@ export const updateUserProfile = async (req, res) => {
 
 export const getUserActivities = async (req, res) => {
   try {
-    const userId = req.user.id;
-
+    const userId = req.user.userId;
     const user = await UserModel.findById(userId);
-
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }

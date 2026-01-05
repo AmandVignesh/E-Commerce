@@ -184,7 +184,6 @@ export default function ShopPage() {
             {filteredProducts.length} products found
           </p>
 
-          {/* ⭐ SHOW LOADER ONLY WHILE PRODUCTS ARE LOADING */}
           {Loading ? (
             <div className="flex justify-center items-center py-50">
               <Loader />

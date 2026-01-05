@@ -17,7 +17,7 @@ export default function Profile() {
   const token = Cookies.get("Jwt_token");
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
-
+  
   const [user, setUser] = useState(null);
   const [activities, setActivities] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ export default function Profile() {
 
         const profileData = await profileRes.json();
         const activitiesData = await activitiesRes.json();
-
+        console.log(activitiesData)
         if (profileRes.ok) {
           setUser(profileData.user);
           setFormData(profileData.user.profile || {});
@@ -348,26 +348,37 @@ export default function Profile() {
 
                       <div className="border-t pt-3">
                         <p className="text-sm text-gray-600 mb-2">Items</p>
-                        {order.items.map((item) => (
-                          <div
-                            key={item._id}
-                            className="flex gap-3 text-sm mb-2"
-                          >
-                            {item.image && (
-                              <img
-                                src={item.image}
-                                alt={item.title}
-                                className="w-10 h-10 object-cover rounded"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <p className="font-medium">{item.title}</p>
-                              <p className="text-gray-600">
-                                Qty: {item.quantity} × ₹{item.price.toFixed(2)}
-                              </p>
+                        {order.items.map((item) => {
+                          const PRICE_MULTIPLIER = 4;
+                          const DISCOUNT_PERCENTAGE = 25;
+
+                          const scaledPrice = item.product.price * PRICE_MULTIPLIER;
+                          const discountedPrice =
+                            scaledPrice - (scaledPrice * DISCOUNT_PERCENTAGE) / 100;
+
+                          return (
+                            <div key={item._id} className="flex gap-3 text-sm mb-2">
+                              {item.product?.image && (
+                                <img
+                                  src={item.product.image}
+                                  alt={item.product.title}
+                                  className="w-10 h-10 object-cover rounded"
+                                />
+                              )}
+
+                              <div className="flex-1">
+                                <p className="font-medium">{item.product.title}</p>
+
+                                <p className="text-gray-600">Qty: {item.quantity}</p>
+
+                                <p className="font-semibold">
+                                  ₹{(discountedPrice * item.quantity).toFixed(2)}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
+
                       </div>
                     </div>
                   ))}
