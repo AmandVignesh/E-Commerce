@@ -51,13 +51,21 @@ export default function Profile() {
         const profileData = await profileRes.json();
         const activitiesData = await activitiesRes.json();
         console.log(activitiesData)
+        if (profileRes.status === 401 || profileRes.status === 403) {
+          Cookies.remove("Jwt_token");
+          navigate("/login");
+          return;
+        }
+
         if (profileRes.ok) {
           setUser(profileData.user);
           setFormData(profileData.user.profile || {});
         } else {
-          console.error("Profile API error:", profileData);
           toast.error(profileData.error || "Failed to load profile");
+          navigate("/login");
+          return;
         }
+
 
         if (activitiesRes.ok) {
           setActivities(activitiesData.activities);
@@ -116,14 +124,6 @@ export default function Profile() {
     return (
       <div className="min-h-screen flex items-center justify-center">
           <Loader/>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">User not found</p>
       </div>
     );
   }
