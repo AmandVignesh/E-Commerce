@@ -15,13 +15,13 @@ export const createRazorpayOrder = async (req, res) => {
     const { items, shippingInfo, pricing, paymentMethod } = req.body;
     const userId = req.user?.userId;
 
-    // ---------------------- FIX: Format Items ----------------------
+   
     const formattedItems = items.map((item) => ({
       product: item.product || item._id || item.id,
       quantity: item.quantity,
     }));
 
-    // If product ID is missing from any item, throw a clean error
+    
     if (formattedItems.some(i => !i.product)) {
       return res.status(400).json({
         success: false,
@@ -29,7 +29,7 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    // ---------------------- COD ORDER FLOW ----------------------
+  
     if (paymentMethod === "cod") {
       const order = await OrderModel.create({
         user: userId,
@@ -43,14 +43,14 @@ export const createRazorpayOrder = async (req, res) => {
         status: "confirmed",
       });
 
-      // Add order to user profile
+      
       await UserModel.findByIdAndUpdate(
         userId,
         { $push: { orders: order._id }, profile: shippingInfo },
         { new: true }
       );
 
-      // Clear Cart
+      
       await CartModel.findOneAndUpdate({ user: userId }, { items: [] });
 
       return res.json({
@@ -60,17 +60,17 @@ export const createRazorpayOrder = async (req, res) => {
       });
     }
 
-    // ---------------------- RAZORPAY ORDER FLOW ----------------------
+   
 
     const options = {
-      amount: Math.round(pricing.total * 100), // Convert to paise
+      amount: Math.round(pricing.total * 100), 
       currency: "INR",
       receipt: `order_${Date.now()}`,
     };
 
     const razorpayOrder = await razorpay.orders.create(options);
 
-    // Create DB order with Razorpay ID
+   
     const order = await OrderModel.create({
       user: userId,
       items: formattedItems,
@@ -84,7 +84,7 @@ export const createRazorpayOrder = async (req, res) => {
       status: "pending",
     });
 
-    // Send details to frontend
+   
     return res.json({
       success: true,
       razorpayOrderId: razorpayOrder.id,

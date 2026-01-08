@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 function Hero() {
   return (
     <div>
-      <div className="relative h-screen bg-linear-to-br from-muted to-background py-16 md:py-24">
+      <div className="relative h-screen bg-linear-to-br from-muted to-background py-16 md:py-24 ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-8 items-center">
 
